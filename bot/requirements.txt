@@ -1,0 +1,4 @@
+aiogram==3.15.0
+httpx==0.28.1
+# pydantic is pinned by aiogram (<2.10); let the resolver choose a compatible one.
+pydantic-settings>=2.1,<3

@@ -1,0 +1,85 @@
+# Production stack — TLS via Caddy (automatic Let's Encrypt) on a real domain.
+#
+# Prereqs: DNS A record for $SITE_DOMAIN → server IP, ports 80+443 open,
+# SITE_DOMAIN + ACME_EMAIL set in .env.
+#
+# Deploy:  docker compose -f docker-compose.prod.yml up -d --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-situationship}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-situationship}
+      POSTGRES_DB: ${POSTGRES_DB:-situationship}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-situationship}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: always
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-situationship}:${POSTGRES_PASSWORD:-situationship}@postgres:5432/${POSTGRES_DB:-situationship}
+      REDIS_URL: redis://redis:6379/0
+      TELEGRAM_WEBAPP_URL: https://${SITE_DOMAIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+
+  bot:
+    build: ./bot
+    restart: on-failure
+    env_file: .env
+    environment:
+      API_BASE_URL: http://api:8000/api/v1
+      # Single source of truth: the Mini App URL derives from SITE_DOMAIN.
+      TELEGRAM_WEBAPP_URL: https://${SITE_DOMAIN}
+    depends_on:
+      - api
+
+  frontend:
+    build: ./frontend
+    restart: always
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - frontend
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

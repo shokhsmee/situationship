@@ -1,0 +1,20 @@
+# Production edge: terminates TLS (auto Let's Encrypt) and reverse-proxies to
+# the API (REST + WebSocket) and the static frontend. SITE_DOMAIN / ACME_EMAIL
+# come from the environment (see docker-compose.prod.yml).
+{
+	email {$ACME_EMAIL}
+}
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# REST API + health check
+	@api path /api/* /health
+	reverse_proxy @api api:8000
+
+	# WebSocket game rooms (Caddy upgrades connections automatically)
+	reverse_proxy /ws/* api:8000
+
+	# Everything else → static SPA
+	reverse_proxy frontend:80
+}

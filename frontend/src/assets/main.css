@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Special+Elite&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-image: radial-gradient(circle at 20% 20%, rgba(245, 166, 35, 0.05), transparent 40%),
+      radial-gradient(circle at 80% 60%, rgba(43, 55, 87, 0.4), transparent 50%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-amber {
+    @apply btn bg-amber-glow text-noir-950 hover:shadow-glow hover:brightness-110;
+  }
+  .btn-ghost {
+    @apply btn border border-noir-600 text-evidence hover:bg-noir-800;
+  }
+  .card {
+    @apply bg-noir-800 border border-noir-600 rounded-xl shadow-pin;
+  }
+  .input {
+    @apply w-full px-3 py-2 rounded-lg bg-noir-900 border border-noir-600 text-evidence
+      focus:outline-none focus:ring-2 focus:ring-amber-glow/60 placeholder:text-noir-600;
+  }
+  .label {
+    @apply block text-sm font-medium text-evidence/70 mb-1;
+  }
+}
+
+/* Corkboard texture used by the evidence board */
+.corkboard {
+  background-color: #6b4f2e;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.15) 1px, transparent 1px);
+  background-size: 8px 8px;
+}

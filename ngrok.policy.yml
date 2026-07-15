@@ -1,0 +1,9 @@
+# Injects the skip header into every inbound request so ngrok's free-tier
+# browser interstitial never fires (required for the Telegram Mini App WebView,
+# which cannot set the header on the initial navigation).
+on_http_request:
+  - actions:
+      - type: add-headers
+        config:
+          headers:
+            ngrok-skip-browser-warning: "true"
